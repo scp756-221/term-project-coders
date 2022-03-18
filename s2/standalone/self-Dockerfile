@@ -1,0 +1,20 @@
+# Build a self-contained S2 image with its
+# initial music list already in the image.
+# Such an image can be run anywhere without
+# mapping an external volume. 
+FROM quay.io/bitnami/python:3.8.6-prod-debian-10-r81
+
+WORKDIR /code
+
+COPY s2-requirements.txt .
+RUN pip install --no-cache-dir -r s2-requirements.txt
+
+COPY app.py unique_code.py .
+
+RUN mkdir -p /data
+COPY music.csv /data
+
+#VOLUME /data
+EXPOSE 30001
+
+CMD ["python", "app.py", "30001"]

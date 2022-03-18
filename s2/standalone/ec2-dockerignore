@@ -1,0 +1,10 @@
+# Some EC2 images (such as the Ubuntu deep learning AMI)
+# have HUGE file lists on the home directory. This
+# file ensures that if `docker image build` is run
+# in such a directory, only the required files are
+# copied into the build context.
+*
+!requirements.txt
+!app-*.py
+!unique_code.py
+!gen-random-bytes.sh

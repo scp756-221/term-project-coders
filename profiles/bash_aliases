@@ -1,0 +1,10 @@
+alias rmi="\rm -i"
+alias cpi="\cp -i"
+alias mvi="\mv -i"
+alias l="ls -F"
+alias lh="ls -lt"
+alias git5="git lol | head -5"
+alias top5="ls -lt | head -6"
+alias top10="ls -lt | head -11"
+if [ -f profiles/aws-a ]; then . profiles/aws-a; fi
+

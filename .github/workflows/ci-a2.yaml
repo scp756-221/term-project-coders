@@ -1,0 +1,56 @@
+name: Test of Assignment 2
+
+on:
+  push:
+    paths:
+      - s2/standalone/app-a2.py
+      - s2/standalone/unique_code-tpl.py
+      - s2/standalone/Dockerfile
+      - s2/standalone/Makefile
+      - s2/standalone/requirements.txt
+      - s2/test/*
+      - tools/find-canonical-owner.sh
+      - .github/workflows/ci-a2.yaml
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Determine the canonical owner
+        run: |
+          tools/find-canonical-owner.sh $GITHUB_REPOSITORY ${{ github.repository_owner }} >> $GITHUB_ENV
+
+      - name: Instantiate template files based on the canonical owner
+        # For A2, only need ZZ-REG-ID to instantiate s2/standalone/unique_code-tpl.py
+        run: |
+          sed -e "s/ZZ-REG-ID=.*/ZZ-REG-ID=${{ env.canonical-owner }}/" cluster/tpl-vars-blank.txt > cluster/tpl-vars.txt
+          make -f k8s-tpl.mak templates
+
+      - name: Build server
+        run: |
+          cd s2/standalone/
+          ./builda2.sh
+          cd ../..
+
+      - name: Build test client
+        run: |
+          cd s2/test/
+          make build-music_test
+          cd ../..
+
+      - name: Run server and test client
+        # The success or failure of the job is determined by the
+        # return code from this last step
+        run: |
+          export HWD=${PWD}
+          cd s2/standalone
+          ./runa2.sh --detached ${HWD}/s2/standalone
+          cd ../..
+          # Give time for server to start up
+          sleep 5
+          cd s2/test/
+          # The actual test!
+          make run-music_test
