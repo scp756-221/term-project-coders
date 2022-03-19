@@ -1,9 +1,0 @@
-k8s.mak
-eks.mak
-az.mak
-mk.mak
-gcp.mak
-allclouds.mak
-api.mak
-.DS_Store
-__pycache__
