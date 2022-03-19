@@ -1,0 +1,16 @@
+[user]
+	name = Ted Kirkpatrick
+	email = ted@sfu.ca
+[alias]
+	l = log --name-status --decorate --abbrev-commit
+	st = status --short
+	ls = ls-files
+	lol = log --graph --decorate --pretty=oneline --abbrev-commit --all
+[push]
+	default = simple
+[core]
+	editor = /usr/bin/vi
+[difftool]
+	prompt = false
+[mergetool]
+	prompt = false

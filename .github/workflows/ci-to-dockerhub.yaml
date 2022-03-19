@@ -1,0 +1,82 @@
+name: CI up to DockerHub
+
+on:
+  workflow_dispatch:
+    branches: [ main ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: instantiate all the templatized files and sub in secrets 
+        run: |
+          sed 's/your-DockerHub-id/${{ secrets.DOCKERHUB_USERNAME }}/' ${{ github.workspace }}/k8s-tpl.mak > ${{ github.workspace }}/k8s.mak
+
+          # select the k8s containers
+          cp ${{ github.workspace }}/db/Dockerfile.k ${{ github.workspace }}/db/Dockerfile
+          cp ${{ github.workspace }}/s1/Dockerfile.k ${{ github.workspace }}/s1/Dockerfile
+          cp ${{ github.workspace }}/s1/appk.py ${{ github.workspace }}/s1/app.py
+          cp ${{ github.workspace }}/s2/Dockerfile.k ${{ github.workspace }}/s2/Dockerfile
+          cp ${{ github.workspace }}/s2/appk.py ${{ github.workspace }}/s2/app.py
+
+          # setup the image repository
+          sed 's/\<YOURNAME\>/${{ secrets.DOCKERHUB_USERNAME }}/' ${{ github.workspace }}/s1/s1.yaml > ${{ github.workspace }}/s1/s11.yaml
+          sed 's/\<YOURNAME\>/${{ secrets.DOCKERHUB_USERNAME }}/' ${{ github.workspace }}/s2/s2.yaml > ${{ github.workspace }}/s2/s21.yaml
+          sed 's/\<YOURNAME\>/${{ secrets.DOCKERHUB_USERNAME }}/' ${{ github.workspace }}/db/db-tpl.yaml > ${{ github.workspace }}/db/db1.yaml
+          rm ${{ github.workspace }}/s1/s1.yaml ${{ github.workspace }}/s2/s2.yaml
+          mv ${{ github.workspace }}/s1/s11.yaml ${{ github.workspace }}/s1/s1.yaml
+          mv ${{ github.workspace }}/s2/s21.yaml ${{ github.workspace }}/s2/s2.yaml
+
+          # switch to us-west-2 for a standard AWS account
+          sed 's/us-east-1/us-west-2/' ${{ github.workspace }}/db/db1.yaml > ${{ github.workspace }}/db/db2.yaml
+          sed 's/AWS_ACCESS_KEY_ID/${{ secrets.AWS_ACCESS_KEY_ID }}/' ${{ github.workspace }}/db/db2.yaml > ${{ github.workspace }}/db/db3.yaml
+          sed 's/AWS_SECRET_ACCESS_KEY/${{ secrets.AWS_SECRET_ACCESS_KEY }}/' ${{ github.workspace }}/db/db3.yaml > ${{ github.workspace }}/db/dbf.yaml
+          rm ${{ github.workspace }}/db/db[123].yaml
+          mv ${{ github.workspace }}/db/dbf.yaml ${{ github.workspace }}/db/db.yaml
+
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        uses: mr-smithers-excellent/docker-build-push@v4
+        name: Build & push db image
+        with:
+          image: ${{ secrets.DOCKERHUB_USERNAME }}/cmpt756db
+          tag: latest
+          registry: docker.io
+          dockerfile: ./db/Dockerfile
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          directory: db
+      -
+        uses: mr-smithers-excellent/docker-build-push@v4
+        name: Build & push s1 image
+        with:
+          image: ${{ secrets.DOCKERHUB_USERNAME }}/cmpt756s1
+          tag: latest
+          registry: docker.io
+          dockerfile: ./s1/Dockerfile
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          directory: s1
+      -
+        uses: mr-smithers-excellent/docker-build-push@v4
+        name: Build & push s2 image
+        with:
+          image: ${{ secrets.DOCKERHUB_USERNAME }}/cmpt756s2
+          tag: latest
+          registry: docker.io
+          dockerfile: ./s2/Dockerfile
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          directory: s2
