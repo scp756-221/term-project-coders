@@ -34,6 +34,7 @@ app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 metrics.info('app_info', 'Music process')
 
+#build database apis
 db = {
     "name": "http://cmpt756db:30002/api/v1/datastore",
     "endpoint": [
