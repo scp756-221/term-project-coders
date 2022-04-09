@@ -16,14 +16,14 @@ from flask import Flask
 from flask import request
 
 # Local modules
-import unique_code
+# import unique_code
 
 # The path to the file (CSV format) containing the sample data
 DB_PATH = '/data/music.csv'
 
 # The unique exercise code
 # The EXER environment variable has a value specific to this exercise
-ucode = unique_code.exercise_hash(os.getenv('EXER'))
+# ucode = unique_code.exercise_hash(os.getenv('EXER'))
 
 # The application
 
@@ -119,15 +119,6 @@ def delete_song(music_id):
     return {}
 
 
-@bp.route('/test', methods=['GET'])
-def test():
-    # This value is for user scp756-221
-    if ('1e0715252b48ed14858ae1ce646d67195183ffb8f9dc02d73c82323d8d75f482' !=
-            ucode):
-        raise Exception("Test failed")
-    return {}
-
-
 @bp.route('/shutdown', methods=['GET'])
 def shutdown():
     # From https://stackoverflow.com/questions/15562446/how-to-stop-flask-application-without-using-ctrl-c # noqa: E501
@@ -146,6 +137,5 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     load_db()
-    app.logger.error("Unique code: {}".format(ucode))
     p = int(sys.argv[1])
     app.run(host='0.0.0.0', port=p, threaded=True)

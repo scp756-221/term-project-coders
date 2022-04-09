@@ -83,7 +83,7 @@ def update_user(user_id):
         json={"email": email, "fname": fname, "lname": lname})
     return (response.json())
 
-
+# create a user. Sign Up Feature.
 @bp.route('/', methods=['POST'])
 def create_user():
     """
@@ -107,7 +107,7 @@ def create_user():
               "fname": fname})
     return (response.json())
 
-
+# delet user: User might want to delete the account
 @bp.route('/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
     headers = request.headers
