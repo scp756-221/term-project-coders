@@ -15,15 +15,10 @@ from flask import Blueprint
 from flask import Flask
 from flask import request
 
-# Local modules
-import unique_code
 
 # The path to the file (CSV format) containing the sample data
 DB_PATH = '/data/music.csv'
 
-# The unique exercise code
-# The EXER environment variable has a value specific to this exercise
-ucode = unique_code.exercise_hash(os.getenv('EXER'))
 
 # The application
 
@@ -116,15 +111,6 @@ def delete_song(music_id):
             "Items": []
         }
         return app.make_response((response, 404))
-    return {}
-
-
-@bp.route('/test', methods=['GET'])
-def test():
-    # This value is for user scp756-221
-    if ('8bb39a5453187f4c43c99e0597ff09a65d03439328fe1b35927a3ac99ada2d01' !=
-            ucode):
-        raise Exception("Test failed")
     return {}
 
 

@@ -16,14 +16,14 @@ from flask import Flask
 from flask import request
 
 # Local modules
-import unique_code
+# import unique_code
 
 # The path to the file (CSV format) containing the sample data
 DB_PATH = '/data/music.csv'
 
 # The unique exercise code
 # The EXER environment variable has a value specific to this exercise
-ucode = unique_code.exercise_hash(os.getenv('EXER'))
+# ucode = unique_code.exercise_hash(os.getenv('EXER'))
 
 # The application
 
@@ -116,15 +116,6 @@ def delete_song(music_id):
             "Items": []
         }
         return app.make_response((response, 404))
-    return {}
-
-
-@bp.route('/test', methods=['GET'])
-def test():
-    # This value is for user scp756-221
-    if ('d45538c9e14d4b18686a5a143f7fbee7ffb6cad84a5f916c3a5494f0e7980171' !=
-            ucode):
-        raise Exception("Test failed")
     return {}
 
 

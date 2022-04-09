@@ -7,7 +7,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app-${ASSIGN}.py app.py
-COPY unique_code.py .
+# COPY unique_code.py . # NO NEED TO GENERATE UNQIUE CODE AGAIN 
 
 VOLUME /data
 EXPOSE 30001

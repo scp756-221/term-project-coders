@@ -9,12 +9,12 @@ WORKDIR /code
 COPY s2-requirements.txt .
 RUN pip install --no-cache-dir -r s2-requirements.txt
 
-COPY app.py unique_code.py .
+COPY app.py unique_code.py ./
 
 RUN mkdir -p /data
 COPY music.csv /data
 
-#VOLUME /data
+VOLUME /data
 EXPOSE 30001
 
 CMD ["python", "app.py", "30001"]
