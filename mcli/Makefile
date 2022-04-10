@@ -9,7 +9,7 @@ S1=`docker inspect s1 --format '{{.NetworkSettings.IPAddress}}'`
 S2=`docker inspect s2 --format '{{.NetworkSettings.IPAddress}}'`
 S3=`docker inspect s3 --format '{{.NetworkSettings.IPAddress}}'`
 
-PORT=30000
+PORT=30001
 SERVICE_TYPE=user # starting with JWT authentivation
 
 build-mcli:
