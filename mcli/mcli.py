@@ -59,17 +59,18 @@ def parse_quoted_strings(arg):
 class Mcli(cmd.Cmd):
     def __init__(self, args):
         self.name = args.name
+        print(self.name)
         self.port = args.port
         self.service_type = args.service_type
         cmd.Cmd.__init__(self)
-        self.prompt = 'mql: '
+        self.prompt = 'User: '
         self.intro = """
 Command-line interface to music service.
 Enter 'help' for command list.
 'Tab' character autocompletes commands.
 """
 
-    def do_read(self, arg):
+    def do_music_read(self, arg):
         """
         Read a single song or list all songs.
 
@@ -92,15 +93,16 @@ Enter 'help' for command list.
         all songs and will instead return an empty list if
         no parameter is provided.
         """
-        print("Entering Reading")
+        
         url = get_url(self.name, self.port, self.service_type)
-        print(url)
+        
         r = requests.get(
             url+arg.strip(),
             headers={'Authorization': DEFAULT_AUTH}
             )
         if r.status_code != 200:
             print("Non-successful status code:", r.status_code)
+
         items = r.json()
         if 'Count' not in items:
             print("0 items returned")
@@ -123,7 +125,7 @@ Enter 'help' for command list.
             pass
         
 
-    def do_create(self, arg):
+    def do_music_create(self, arg):
         """
         Add a song to the database.
 
@@ -167,7 +169,7 @@ Enter 'help' for command list.
         )
         print(r.json())
 
-    def do_delete(self, arg):
+    def do_music_delete(self, arg):
         """
         Delete a song.
 
@@ -188,6 +190,24 @@ Enter 'help' for command list.
             )
         if r.status_code != 200:
             print("Non-successful status code:", r.status_code)
+
+####################################################################3
+######################################################################
+############################  User Services ########################
+#####################################################################
+
+    def do_user_read(self, arg):
+        url = get_url(self.name, self.port, self.service_type)
+        
+        r = requests.get(
+            url+arg.strip(),
+            headers={'Authorization': DEFAULT_AUTH}
+            )
+        if r.status_code != 200:
+            print("Non-successful status code:", r.status_code)
+
+        print(r)
+        
 
     def do_quit(self, arg):
         """

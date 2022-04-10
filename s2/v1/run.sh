@@ -11,9 +11,9 @@ fi
 
 if [[ $# -eq 1 ]]
 then
-  target=run-s1-detached
+  target=run-s2-detached
 else
-  target=run-s1
+  target=run-s2
 fi
 
 make VER=v0.25 ${target}
