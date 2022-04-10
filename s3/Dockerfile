@@ -5,8 +5,10 @@ WORKDIR /code
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py unique_code.py ./
+COPY app.py ./
 
-EXPOSE 30001
+VOLUME /data
 
-CMD ["python", "app.py", "30001"]
+EXPOSE 30003
+
+CMD ["python", "app.py", "30003"]

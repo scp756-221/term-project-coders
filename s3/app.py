@@ -20,19 +20,15 @@ import requests
 
 import simplejson as json
 
-# Local modules
-import unique_code
-
-# The unique exercise code
-# The EXER environment variable has a value specific to this exercise
-ucode = unique_code.exercise_hash(os.getenv('EXER'))
-
 # The application
 
 app = Flask(__name__)
 
 metrics = PrometheusMetrics(app)
-metrics.info('app_info', 'Music process')
+metrics.info('app_info', 'Playlist process')
+
+# The path to the file (CSV format) containing the sample data
+DB_PATH = '/data/playlist.csv'
 
 db = {
     "name": "http://cmpt756db:30002/api/v1/datastore",
@@ -44,6 +40,16 @@ db = {
 }
 bp = Blueprint('app', __name__)
 
+database = {}
+
+
+def load_db():
+    global database
+    with open(DB_PATH, 'r') as inp:
+        rdr = csv.reader(inp)
+        next(rdr)  # Skip header line
+        for artist, songtitle, id in rdr:
+            database[id] = (artist, songtitle)
 
 @bp.route('/health')
 @metrics.do_not_track()
@@ -77,7 +83,12 @@ def get_playlist(playlist):
         return Response(json.dumps({"error": "missing auth"}),
                         status=401,
                         mimetype='application/json')
-    payload = {"objtype": "playlist", "objkey": playlist}
+
+    payload = {
+        "objtype": "playlist",
+         "objkey": playlist
+    }
+
     url = db['name'] + '/' + db['endpoint'][0]
     response = requests.get(
         url,
@@ -94,6 +105,8 @@ def create_playlist():
         return Response(json.dumps({"error": "missing auth"}),
                         status=401,
                         mimetype='application/json')
+                        
+    # Playlist Creation require two main fields: user_id and array of songs.#
     try:
         content = request.get_json()
         User_id = content['User_id']
@@ -103,7 +116,11 @@ def create_playlist():
     url = db['name'] + '/' + db['endpoint'][1]
     response = requests.post(
         url,
-        json={"objtype": "playlist", "User_id": User_id, "SongList": SongList},
+        json={
+            "objtype": "playlist",
+            "User_id": User_id,
+            "SongList": SongList
+        },
         headers={'Authorization': headers['Authorization']})
     return (response.json())
 
@@ -135,7 +152,6 @@ if __name__ == '__main__':
         logging.error("missing port arg 1")
         sys.exit(-1)
 
-    app.logger.error("Unique code: {}".format(ucode))
     p = int(sys.argv[1])
     # Do not set debug=True---that will disable the Prometheus metrics
     app.run(host='0.0.0.0', port=p, threaded=True)
