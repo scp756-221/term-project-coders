@@ -25,24 +25,51 @@ def parse_args():
         description='Command-line query interface to music service'
         )
     argp.add_argument(
-        'name',
+        'user_name',
+        help="DNS name or IP address of user server"
+        )
+    argp.add_argument(
+        'music_name',
         help="DNS name or IP address of music server"
         )
     argp.add_argument(
-        'port',
+        'playlist_name',
+        help="DNS name or IP address of playlist server"
+        )
+    argp.add_argument(
+        'user_port',
+        type=int,
+        help="Port number of user server"
+        )
+    argp.add_argument(
+        'music_port',
         type=int,
         help="Port number of music server"
         )
     argp.add_argument(
-        'service_type',
-        help="Service type: auth of S1, music for S2, playlist for S3"
-    )
+        'playlist_port',
+        type=int,
+        help="Port number of playlist server"
+        )
+    # argp.add_argument(
+    #     'service_type',
+    #     help="Service type: user of S1, music for S2, playlist for S3"
+    # )
     return argp.parse_args()
 
+################################################################################
+################################################################################
+############################# API URLs  ########################################
+################################################################################
+################################################################################
+def get_music_url(music_name, port):
+    return "http://{}:{}/api/v1/music/".format(music_name, port)
 
-def get_url(name, port, service_type):
-    return "http://{}:{}/api/v1/{}/".format(name, port, service_type)
+def get_user_url(user_name, port):
+    return "http://{}:{}/api/v1/user/".format(user_name, port)
 
+def get_playlist_url(name, port):
+    return "http://{}:{}/api/v1/playlist/".format(name, port)
 
 def parse_quoted_strings(arg):
     """
@@ -55,13 +82,19 @@ def parse_quoted_strings(arg):
     args = mre.findall(arg)
     return [''.join(a) for a in args]
 
-
+#########################################################################
+########################## Client CLI Interface #########################
+#########################################################################
 class Mcli(cmd.Cmd):
     def __init__(self, args):
-        self.name = args.name
-        print(self.name)
-        self.port = args.port
-        self.service_type = args.service_type
+        self.user_name = args.user_name
+        print(self.user_name)
+        self.music_name = args.music_name
+        print(self.music_name)
+        self.user_port = args.user_port
+        self.music_port = args.music_port
+
+        # self.playlist_port = args.playlist_port
         cmd.Cmd.__init__(self)
         self.prompt = 'User: '
         self.intro = """
@@ -70,7 +103,12 @@ Enter 'help' for command list.
 'Tab' character autocompletes commands.
 """
 
-    def do_music_read(self, arg):
+#######################################################################################################################
+#######################################################################################################################
+########################################### Music Service #############################################################
+#######################################################################################################################
+
+    def do_read_music(self, arg):
         """
         Read a single song or list all songs.
 
@@ -94,8 +132,8 @@ Enter 'help' for command list.
         no parameter is provided.
         """
         
-        url = get_url(self.name, self.port, self.service_type)
-        
+        url = get_music_url(self.music_name, self.music_port)
+        print(url)
         r = requests.get(
             url+arg.strip(),
             headers={'Authorization': DEFAULT_AUTH}
@@ -108,24 +146,16 @@ Enter 'help' for command list.
             print("0 items returned")
             return
         print("{} items returned".format(items['Count']))
-        if self.service_type == SERVICE_TYPE_USER: # authentication
-            for i in items['Items']:
-                print("{}  {:20.20s} {}".format(
-                    i['user_id'],
-                    i['fname'],
-                    i['lname'],
-                    i['email']))
-        elif self.service_type == SERVICE_TYPE_MUSIC: # music service
-            for i in items['Items']:
-                print("{}  {:20.20s} {}".format(
-                    i['music_id'],
-                    i['Artist'],
-                    i['SongTitle']))
-        else: # playlist service
-            pass
+
+        for i in items['Items']:
+            print("{}  {:20.20s} {}".format(
+                i['music_id'],
+                i['Artist'],
+                i['SongTitle']))
+
         
 
-    def do_music_create(self, arg):
+    def do_create_music(self, arg):
         """
         Add a song to the database.
 
@@ -144,22 +174,14 @@ Enter 'help' for command list.
         create Chumbawamba Tubthumping
             No quotes needed for single-word artist or title name.
         """
-        url = get_url(self.name, self.port)
+        url = get_music_url(self.music_name, self.music_port)
         args = parse_quoted_strings(arg)
-        if self.service_type == SERVICE_TYPE_USER: # authentication
-            payload = {
-                'user_id': args[0],
-                'fname': args[1],
-                'lname': args[2],
-                'email': args[3]
-            }
-        elif self.service_type == SERVICE_TYPE_MUSIC:
-            payload = {
-                'Artist': args[0],
-                'SongTitle': args[1]
-            }
-        else: # playlist service
-            pass
+
+        payload = {
+            'Artist': args[0],
+            'SongTitle': args[1]
+        }
+
 
         # making the POST request for creation
         r = requests.post(
@@ -169,7 +191,7 @@ Enter 'help' for command list.
         )
         print(r.json())
 
-    def do_music_delete(self, arg):
+    def do_delete_music(self, arg):
         """
         Delete a song.
 
@@ -183,7 +205,7 @@ Enter 'help' for command list.
         delete 6ecfafd0-8a35-4af6-a9e2-cbd79b3abeea
             Delete "The Last Great American Dynasty".
         """
-        url = get_url(self.name, self.port, self.service_type)
+        url = get_music_url(self.music_name, self.music_port)
         r = requests.delete(
             url+arg.strip(),
             headers={'Authorization': DEFAULT_AUTH}
@@ -191,13 +213,26 @@ Enter 'help' for command list.
         if r.status_code != 200:
             print("Non-successful status code:", r.status_code)
 
-####################################################################3
-######################################################################
-############################  User Services ########################
-#####################################################################
+#######################################################################################################################
+#######################################################################################################################
+########################################### User Services #############################################################
+#######################################################################################################################
+#######################################################################################################################
+    def do_read_user(self, arg):
+        """
+        Read a User.
 
-    def do_user_read(self, arg):
-        url = get_url(self.name, self.port, self.service_type)
+        Parameters
+        ----------
+        song: music_id
+            The music_id of the song to delete.
+
+        Examples
+        --------
+        delete 6ecfafd0-8a35-4af6-a9e2-cbd79b3abeea
+            Delete "The Last Great American Dynasty".
+        """
+        url = get_user_url(self.user_name, self.user_port)
         
         r = requests.get(
             url+arg.strip(),
@@ -206,8 +241,140 @@ Enter 'help' for command list.
         if r.status_code != 200:
             print("Non-successful status code:", r.status_code)
 
-        print(r)
-        
+        items = r.json()
+        if 'Count' not in items:
+            print("0 items returned")
+            return
+        print("{} items returned".format(items['Count']))
+
+        for i in items['Items']:
+            print("{}  {:20.20s} {}".format(
+                i['lname'],
+                i['email'],
+                i['fname']))
+
+    def do_delete_user(self, arg):
+        """
+        Delete a playlist.
+
+        Parameters
+        ----------
+        song: playlist_id
+            The id of the playlist to delete.
+
+        Examples
+        --------
+        delete 6ecfafd0-8a35-4af6-a9e2-cbd79b3abeea
+            Delete "The Last Great American Dynasty".
+        """
+        url = get_user_url(self.user_name, self.user_port)
+        r = requests.delete(
+            url+arg.strip(),
+            headers={'Authorization': DEFAULT_AUTH}
+            )
+        if r.status_code != 200:
+            print("Non-successful status code:", r.status_code)
+
+    def do_login(self, arg):
+        """
+        Login.
+
+        Parameters
+        ----------
+        email: 
+            User email.
+        password:
+            User password.
+
+        Examples
+        ----------
+        login maggy@email.com 123456
+            Login as Maggy Gatling.
+        """
+        pass
+
+    def do_signup(self, arg):
+        """
+        Create a user.
+
+        Parameters
+        ----------
+        email: 
+            User email.
+        password:
+            User password.
+
+        Examples
+        ----------
+        signup maggy maggy@email.com gatling
+            Successfully Created User.
+        """
+        url = get_user_url(self.user_name, self.user_port)
+        args = parse_quoted_strings(arg)
+
+        payload = {
+            "lname": args[0],
+            "email": args[1],
+            "fname": args[2]
+        }
+
+        r = requests.post(
+            url,
+            json=payload,
+            headers={'Authorization': DEFAULT_AUTH}
+        )
+        print(r.json())
+#######################################################################################################################
+#######################################################################################################################
+########################################### Playlist Services #########################################################
+#######################################################################################################################
+#######################################################################################################################
+
+    def do_create_playlist(self, arg):
+        """
+        Read a User.
+
+        Parameters
+        ----------
+        song: music_id
+            The music_id of the song to delete.
+
+        Examples
+        --------
+        delete 6ecfafd0-8a35-4af6-a9e2-cbd79b3abeea
+            Delete "The Last Great American Dynasty".
+        """
+        pass
+    def do_read_playlist(self, arg):
+        pass
+    
+    def do_delete_playlist(self, arg):
+        """
+        Delete a playlist.
+
+        Parameters
+        ----------
+        song: playlist_id
+            The id of the playlist to delete.
+
+        Examples
+        --------
+        delete 6ecfafd0-8a35-4af6-a9e2-cbd79b3abeea
+            Delete "The Last Great American Dynasty".
+        """
+        # url = get_music_url(self.name, self.playlist_port)
+        # r = requests.delete(
+        #     url+arg.strip(),
+        #     headers={'Authorization': DEFAULT_AUTH}
+        #     )
+        # if r.status_code != 200:
+        #     print("Non-successful status code:", r.status_code)
+        pass
+#######################################################################################################################
+#######################################################################################################################
+########################################### CLI Functions #########################################################
+#######################################################################################################################
+#######################################################################################################################
 
     def do_quit(self, arg):
         """
@@ -219,7 +386,7 @@ Enter 'help' for command list.
         """
         Tell the music cerver to shut down.
         """
-        url = get_url(self.name, self.port)
+        url = get_music_url(self.music_name, self.music_port)
         r = requests.get(
             url+'shutdown',
             headers={'Authorization': DEFAULT_AUTH}
