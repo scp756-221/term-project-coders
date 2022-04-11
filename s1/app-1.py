@@ -65,26 +65,26 @@ def readiness():
     return Response("", status=200, mimetype="application/json")
 
 
-@bp.route('/<user_id>', methods=['PUT'])
-def update_user(user_id):
-    headers = request.headers
-    # check header here
-    if 'Authorization' not in headers:
-        return Response(json.dumps({"error": "missing auth"}), status=401,
-                        mimetype='application/json')
-    try:
-        content = request.get_json()
-        email = content['email']
-        fname = content['fname']
-        lname = content['lname']
-    except Exception:
-        return json.dumps({"message": "error reading arguments"})
-    url = db['name'] + '/' + db['endpoint'][3] # http://cmpt756db:30002/api/v1/datastore/update
-    response = requests.put(
-        url,
-        params={"objtype": "user", "objkey": user_id},
-        json={"email": email, "fname": fname, "lname": lname})
-    return (response.json())
+# @bp.route('/<user_id>', methods=['PUT'])
+# def update_user(user_id):
+#     headers = request.headers
+#     # check header here
+#     if 'Authorization' not in headers:
+#         return Response(json.dumps({"error": "missing auth"}), status=401,
+#                         mimetype='application/json')
+#     try:
+#         content = request.get_json()
+#         email = content['email']
+#         fname = content['fname']
+#         lname = content['lname']
+#     except Exception:
+#         return json.dumps({"message": "error reading arguments"})
+#     url = db['name'] + '/' + db['endpoint'][3] # http://cmpt756db:30002/api/v1/datastore/update
+#     response = requests.put(
+#         url,
+#         params={"objtype": "user", "objkey": user_id},
+#         json={"email": email, "fname": fname, "lname": lname})
+#     return (response.json())
 
 # create a user. Sign Up Feature.
 @bp.route('/', methods=['POST'])
