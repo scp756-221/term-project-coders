@@ -45,7 +45,6 @@ db = {
 }
 
 
-@bp.route('/', methods=['GET'])
 @metrics.do_not_track()
 def hello_world():
     return ("If you are reading this in a browser, your service is "
@@ -65,6 +64,81 @@ def readiness():
     return Response("", status=200, mimetype="application/json")
 
 
+#mcli: signup
+@bp.route('/', methods=['POST'])
+def create_user():
+    """
+    Create a user.
+    If a record already exists with the same fname, lname, and email,
+    the old UUID is replaced with a new one.
+    """
+    try:
+        content = request.get_json()
+        lname = content['lname']
+        email = content['email']
+        fname = content['fname']
+    except Exception:
+        return json.dumps({"message": "error reading arguments"})
+    # url = db['name'] + '/' + db['endpoint'][1]
+    # response = requests.post(
+    #     url,
+    #     json={"objtype": "user",
+    #           "lname": lname,
+    #           "email": email,
+    #           "fname": fname})
+
+    print(lname, email, fname)
+    # return (response.json())
+
+
+#mcli: login
+@bp.route('/login', methods=['PUT'])
+def login():
+    try:
+        content = request.get_json()
+        uid = content['uid']
+    except Exception:
+        return json.dumps({"message": "error reading parameters"})
+    url = db['name'] + '/' + db['endpoint'][0]
+    response = requests.get(url, params={"objtype": "user", "objkey": uid})
+    data = response.json()
+    if len(data['Items']) > 0:
+        encoded = jwt.encode({'user_id': uid, 'time': time.time()},
+                             'secret',
+                             algorithm='HS256')
+    return encoded
+
+
+#mcli: read_user
+@bp.route('/', methods=['GET'])
+def list_all():
+    global database
+    response = {
+        "Count": 1,
+        "Items":
+            [{'lname': "Hope", 'email': "kkk@sfu.ca", 'fname': "Heaven"}]
+    }
+    return response
+
+
+#mcli: delete_user
+# delet user: User might want to delete the account
+@bp.route('/<user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    headers = request.headers
+    # check header here
+    if 'Authorization' not in headers:
+        return Response(json.dumps({"error": "missing auth"}),
+                        status=401,
+                        mimetype='application/json')
+    url = db['name'] + '/' + db['endpoint'][2]
+
+    response = requests.delete(url,
+                               params={"objtype": "user", "objkey": user_id})
+    return (response.json())
+
+
+#???
 @bp.route('/<user_id>', methods=['PUT'])
 def update_user(user_id):
     headers = request.headers
@@ -86,46 +160,8 @@ def update_user(user_id):
         json={"email": email, "fname": fname, "lname": lname})
     return (response.json())
 
-# create a user. Sign Up Feature.
-@bp.route('/', methods=['POST'])
-def create_user():
-    """
-    Create a user.
-    If a record already exists with the same fname, lname, and email,
-    the old UUID is replaced with a new one.
-    """
-    try:
-        content = request.get_json()
-        lname = content['lname']
-        email = content['email']
-        fname = content['fname']
-    except Exception:
-        return json.dumps({"message": "error reading arguments"})
-    url = db['name'] + '/' + db['endpoint'][1]
-    response = requests.post(
-        url,
-        json={"objtype": "user",
-              "lname": lname,
-              "email": email,
-              "fname": fname})
-    return (response.json())
 
-# delet user: User might want to delete the account
-@bp.route('/<user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    headers = request.headers
-    # check header here
-    if 'Authorization' not in headers:
-        return Response(json.dumps({"error": "missing auth"}),
-                        status=401,
-                        mimetype='application/json')
-    url = db['name'] + '/' + db['endpoint'][2]
-
-    response = requests.delete(url,
-                               params={"objtype": "user", "objkey": user_id})
-    return (response.json())
-
-
+#mcli: ??get user by user_id??
 @bp.route('/<user_id>', methods=['GET'])
 def get_user(user_id):
     headers = request.headers
@@ -141,23 +177,7 @@ def get_user(user_id):
     return (response.json())
 
 
-@bp.route('/login', methods=['PUT'])
-def login():
-    try:
-        content = request.get_json()
-        uid = content['uid']
-    except Exception:
-        return json.dumps({"message": "error reading parameters"})
-    url = db['name'] + '/' + db['endpoint'][0]
-    response = requests.get(url, params={"objtype": "user", "objkey": uid})
-    data = response.json()
-    if len(data['Items']) > 0:
-        encoded = jwt.encode({'user_id': uid, 'time': time.time()},
-                             'secret',
-                             algorithm='HS256')
-    return encoded
-
-
+#??
 @bp.route('/logoff', methods=['PUT'])
 def logoff():
     try:

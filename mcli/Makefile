@@ -21,5 +21,11 @@ build-mcli:
 run-mcli:
 	docker container run $(ARCH) -it --rm --name mcli mcli:$(VER) python3 mcli.py $(S1) $(S2) $(S3) $(S1_PORT) $(S2_PORT) $(S3_PORT)
 
+build-mcli-arm:
+	docker image build -f Dockerfile -t mcli:$(VER) .
+
+run-mcli-arm:
+	docker container run -it --rm --name mcli mcli:$(VER) python3 mcli.py $(S1) $(S2) $(S3) $(S1_PORT) $(S2_PORT) $(S3_PORT)
+
 check-IP:
 	echo $(S1) $(S2)

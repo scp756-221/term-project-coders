@@ -213,11 +213,64 @@ Enter 'help' for command list.
         if r.status_code != 200:
             print("Non-successful status code:", r.status_code)
 
+
 #######################################################################################################################
 #######################################################################################################################
 ########################################### User Services #############################################################
 #######################################################################################################################
 #######################################################################################################################
+    
+    def do_signup(self, arg):
+        """
+        Create a user.
+
+        Parameters
+        ----------
+        email: 
+            User email.
+        password:
+            User password.
+
+        Examples
+        ----------
+        signup maggy maggy@email.com gatling
+            Successfully Created User.
+        """
+        url = get_user_url(self.user_name, self.user_port)
+        args = parse_quoted_strings(arg)
+
+        payload = {
+            "lname": args[0],
+            "email": args[1],
+            "fname": args[2]
+        }
+
+        r = requests.post(
+            url,
+            json=payload,
+            headers={'Authorization': DEFAULT_AUTH}
+        )
+
+    
+    def do_login(self, arg):
+        """
+        Login.
+
+        Parameters
+        ----------
+        email: 
+            User email.
+        password:
+            User password.
+
+        Examples
+        ----------
+        login maggy@email.com 123456
+            Login as Maggy Gatling.
+        """
+        pass
+    
+    
     def do_read_user(self, arg):
         """
         Read a User.
@@ -253,6 +306,7 @@ Enter 'help' for command list.
                 i['email'],
                 i['fname']))
 
+
     def do_delete_user(self, arg):
         """
         Delete a playlist.
@@ -275,55 +329,7 @@ Enter 'help' for command list.
         if r.status_code != 200:
             print("Non-successful status code:", r.status_code)
 
-    def do_login(self, arg):
-        """
-        Login.
 
-        Parameters
-        ----------
-        email: 
-            User email.
-        password:
-            User password.
-
-        Examples
-        ----------
-        login maggy@email.com 123456
-            Login as Maggy Gatling.
-        """
-        pass
-
-    def do_signup(self, arg):
-        """
-        Create a user.
-
-        Parameters
-        ----------
-        email: 
-            User email.
-        password:
-            User password.
-
-        Examples
-        ----------
-        signup maggy maggy@email.com gatling
-            Successfully Created User.
-        """
-        url = get_user_url(self.user_name, self.user_port)
-        args = parse_quoted_strings(arg)
-
-        payload = {
-            "lname": args[0],
-            "email": args[1],
-            "fname": args[2]
-        }
-
-        r = requests.post(
-            url,
-            json=payload,
-            headers={'Authorization': DEFAULT_AUTH}
-        )
-        print(r.json())
 #######################################################################################################################
 #######################################################################################################################
 ########################################### Playlist Services #########################################################
