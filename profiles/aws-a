@@ -1,0 +1,109 @@
+
+# Convenient aliases for the aws cli
+# NB: These aliases use jq (https://stedolan.github.io/jq/) judiciously!
+
+# The next two statements will be automatically selected by
+# the xfer.sh script---do not modify them
+# Use this definition when running in Host OS
+#PROFILE=~/.ec2.mak
+# Use this definition when running in Guest OS via the tools container
+PROFILE=profiles/ec2.mak
+
+alias awho='aws sts get-caller-identity'
+
+# usage: esn <instance-name> <userid>
+# Add the instance name to the bash prompt definition in ~/.bashrc
+esn ()
+{
+    if [[ $# -ne 2 ]]; then
+      echo "Usage: esn <instance-name> <userid>"
+    else
+      KEYFILE=$(make -f ${PROFILE} keyfile)
+      ssh -i ${KEYFILE} ${2}@`enamedns ${1}` 'echo PS1="\"[\u@'${1}'/ec2 \W]$ \"" >> ~/.bashrc'
+    fi
+}
+
+# usage: eps [--region REGION]
+# Return a short description of all known EC2 instances
+# Optional region parameter ("--region" required)
+eps() {
+    aws "$@" --output json ec2 describe-instances | jq -r '.Reservations[].Instances[]| .InstanceId + " " + .InstanceType + " " + .State.Name + " " + .PublicIpAddress + " " + .Tags[0].Value'
+}
+
+# usage: enameid <instance-name>
+# Return the ID of a named instance
+enameid () {
+    aws --output json ec2 describe-instances --filters Name=tag:mnemonic-name,Values="${1}" \
+        | jq -r '.Reservations[].Instances[0] | .InstanceId'
+}
+
+# usage: enamddns <instance-name>
+# Return the DNS name of a named instance
+enamedns () {
+    aws --output json ec2 describe-instances --filters Name=tag:mnemonic-name,Values="${1}" \
+        | jq -r '.Reservations[].Instances[0] | .PublicDnsName'
+}
+
+# usage: ekillid <instance-id>
+# Kill an EC2 instance given its instance-id
+ekillid() {
+    aws  --output json ec2 terminate-instances --instance-id "$@"
+}
+
+# usage: epurge
+# terminate all running instances
+epurge() {
+    ekillid `eps | grep running | awk '{print $1}'`
+}
+
+# usage: ekn <instance-name>
+# Terminate an instance by name
+ekn() {
+    ekillid $(enameid ${1})
+}
+
+# usage: esshn <instance-name> <userid>
+# SSH in to a named instance
+esshn() {
+    if [[ $# -ne 2 ]]; then
+      echo "Usage: esshn <instance-name> <userid>"
+    else
+      make -f ${PROFILE} EC2_DNS=`enamedns ${1}` SSH_USER=${2} sshdns
+    fi
+}
+
+# usage: epkg <pgkname>
+# Run an x86 instance defined by <pkgname>
+epkg() {
+    if [[ $# -ne 1 ]]; then
+      echo "Usage: epkg <pkgname>"
+    else
+      make -f ${PROFILE} PKG=${1} up
+    fi
+}
+
+# usage: armpkg <pgkname>
+# Run an ARM instance defined by <pkgname>
+armpkg() {
+    if [[ $# -ne 1 ]]; then
+      echo "Usage: armpkg <pkgname>"
+    else
+      make -f ${PROFILE} ARMPKG=${1} up-arm
+    fi
+}
+
+alias s3ls='aws s3 ls '
+alias s3lsr='aws s3 ls --recursive'
+alias s3cp='aws s3 cp '
+alias s3rm='aws s3 rm '
+alias s3mv='aws s3 mv '
+
+# NB: You must fill in the PROFILE with *at least* the security group and key information; review the others.
+
+alias erun='make -f ${PROFILE} up'
+alias essh='make -f ${PROFILE} ssh'
+alias ekill='ekillid $(cat logs/x86-id.log)'
+
+alias armrun='make -f ${PROFILE} up-arm'
+alias armssh='make -f ${PROFILE} ssh-arm'
+alias armkill='ekillid $(cat logs/arm-id.log)'
