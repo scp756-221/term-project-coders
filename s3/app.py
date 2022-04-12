@@ -30,6 +30,7 @@ ucode = unique_code.exercise_hash(os.getenv('EXER'))
 # The application
 
 app = Flask(__name__)
+bp = Blueprint('app', __name__)
 
 metrics = PrometheusMetrics(app)
 metrics.info('app_info', 'Music process')
@@ -41,9 +42,10 @@ db = {
         "read",
         "write",
         "delete"
+        "update"
     ]
 }
-bp = Blueprint('app', __name__)
+
 
 
 @bp.route('/health')
@@ -58,37 +60,9 @@ def readiness():
     return Response("", status=200, mimetype="application/json")
 
 
-@bp.route('/', methods=['GET'])
-def list_all():
-    headers = request.headers
-    # check header here
-    if 'Authorization' not in headers:
-        return Response(json.dumps({"error": "missing auth"}),
-                        status=401,
-                        mimetype='application/json')
-    # list all songs here
-    return {}
-
-
-@bp.route('/<music_id>', methods=['GET'])
-def get_song(music_id):
-    headers = request.headers
-    # check header here
-    if 'Authorization' not in headers:
-        return Response(json.dumps({"error": "missing auth"}),
-                        status=401,
-                        mimetype='application/json')
-    payload = {"objtype": "music", "objkey": music_id}
-    url = db['name'] + '/' + db['endpoint'][0]
-    response = requests.get(
-        url,
-        params=payload,
-        headers={'Authorization': headers['Authorization']})
-    return (response.json())
-
 
 @bp.route('/', methods=['POST'])
-def create_song():
+def create_book():
     headers = request.headers
     # check header here
     if 'Authorization' not in headers:
@@ -97,41 +71,34 @@ def create_song():
                         mimetype='application/json')
     try:
         content = request.get_json()
-        Artist = content['Artist']
-        SongTitle = content['SongTitle']
+        Artist = content['Name']
+        SongTitle = content['Book']
     except Exception:
         return json.dumps({"message": "error reading arguments"})
     url = db['name'] + '/' + db['endpoint'][1]
     response = requests.post(
         url,
-        json={"objtype": "music", "Artist": Artist, "SongTitle": SongTitle},
+        json={"objtype": "Book", "Name": Name, "Book": Book},
         headers={'Authorization': headers['Authorization']})
     return (response.json())
 
 
-@bp.route('/<music_id>', methods=['DELETE'])
-def delete_song(music_id):
+@bp.route('/<Book_id>', methods=['GET'])
+def delete_song(Book_id):
     headers = request.headers
     # check header here
     if 'Authorization' not in headers:
         return Response(json.dumps({"error": "missing auth"}),
                         status=401,
                         mimetype='application/json')
-    url = db['name'] + '/' + db['endpoint'][2]
+    url = db['name'] + '/' + db['endpoint'][1]
     response = requests.delete(
         url,
-        params={"objtype": "music", "objkey": music_id},
+        params={"objtype": "Book", "objkey": Book_id},
         headers={'Authorization': headers['Authorization']})
     return (response.json())
 
 
-@bp.route('/test', methods=['GET'])
-def test():
-    # This value is for user scp756-221
-    if ('6cbd353eaadbc61c35132838888c136e96e31f10643fb2b472753b1acfb36e58' !=
-            ucode):
-        raise Exception("Test failed")
-    return {}
 
 
 # All database calls will have this prefix.  Prometheus metric
@@ -148,3 +115,4 @@ if __name__ == '__main__':
     p = int(sys.argv[1])
     # Do not set debug=True---that will disable the Prometheus metrics
     app.run(host='0.0.0.0', port=p, threaded=True)
+
