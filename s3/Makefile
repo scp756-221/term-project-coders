@@ -1,6 +1,6 @@
 # Makefile for standalone Music service (S2)
 
-VER=v0.25
+VER=v1
 HOST_DIR=$(CURDIR)
 
 # this is needed to switch M1 Mac to x86 for compatibility with x86 instances/students

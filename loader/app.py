@@ -49,7 +49,6 @@ def create_user(lname, fname, email, uuid):
               "uuid": uuid})
     return (response.json())
 
-
 def create_song(artist, title, uuid):
     """
     Create a song.
@@ -63,6 +62,17 @@ def create_song(artist, title, uuid):
         json={"objtype": "music",
               "Artist": artist,
               "SongTitle": title,
+              "uuid": uuid})
+    return (response.json())
+
+def create_book(name, book, uuid):
+    url = db['name'] + '/load'
+    response = requests.post(
+        url,
+        auth=build_auth(),
+        json={"objtype": "book",
+              "name": name,
+              "book": book,
               "uuid": uuid})
     return (response.json())
 
@@ -90,10 +100,7 @@ if __name__ == '__main__':
                                uuid.strip())
             resp = check_resp(resp, 'user_id')
             if resp is None or resp != uuid:
-                print('Error creating user {} {} ({}), {}'.format(fn,
-                                                                  ln,
-                                                                  email,
-                                                                  uuid))
+                print('Error creating user {} {} ({}), {}'.format(fn, ln, email, uuid))
 
     with open('{}/music/music.csv'.format(resource_dir), 'r') as inp:
         rdr = csv.reader(inp)
@@ -104,6 +111,16 @@ if __name__ == '__main__':
                                uuid.strip())
             resp = check_resp(resp, 'music_id')
             if resp is None or resp != uuid:
-                print('Error creating song {} {}, {}'.format(artist,
-                                                             title,
-                                                             uuid))
+                print('Error creating song {} {}, {}'.format(artist, title, uuid))
+
+
+    with open('{}/book/book.csv'.format(resource_dir), 'r') as inp:
+        rdr = csv.reader(inp)
+        next(rdr)  # Skip header
+        for name, book, uuid in rdr:
+            resp = create_book(name.strip(),
+                               book.strip(),
+                               uuid.strip())
+            resp = check_resp(resp, 'book_id')
+            if resp is None or resp != uuid:
+                print('Error creating book {} {}, {}'.format(name, book, uuid))

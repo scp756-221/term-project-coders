@@ -1,0 +1,7 @@
+# Header for ConfigMap built from book.csv
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: book
+data:
+  book.csv: |
