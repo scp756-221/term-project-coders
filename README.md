@@ -51,4 +51,8 @@ The resulting output should include tables `User` and `Music`.
 
 ----
 
+# 3. Final Demo Video
 
+The Final Demo video is available below:
+
+[Click Here to Video Demo Video on Youtube](https://youtu.be/jPatCKwj_nc)

@@ -46,5 +46,28 @@
         }
       }
     },
+    "tableBook": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "Book-ZZ-REG-ID",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "book_id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "book_id",
+            "KeyType": "HASH"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": "5",
+          "WriteCapacityUnits": "5"
+        }
+      }
+    },
+    
     "Description": "DynamoDB tables for ZZ-AWS-ACCESS-KEY-ID"
   }

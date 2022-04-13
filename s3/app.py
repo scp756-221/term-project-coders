@@ -1,11 +1,10 @@
 """
 SFU CMPT 756
-Sample application---music service.
+Service 3---book service.
 """
 
 # Standard library modules
 import logging
-import os
 import sys
 
 # Installed packages
@@ -25,31 +24,20 @@ import simplejson as json
 app = Flask(__name__)
 
 metrics = PrometheusMetrics(app)
-metrics.info('app_info', 'Playlist process')
+metrics.info('app_info', 'Book process')
 
-# The path to the file (CSV format) containing the sample data
-DB_PATH = '/data/playlist.csv'
+bp = Blueprint('app', __name__)
 
 db = {
     "name": "http://cmpt756db:30002/api/v1/datastore",
     "endpoint": [
         "read",
         "write",
-        "delete"
+        "delete",
+        "update"
     ]
 }
-bp = Blueprint('app', __name__)
 
-database = {}
-
-
-def load_db():
-    global database
-    with open(DB_PATH, 'r') as inp:
-        rdr = csv.reader(inp)
-        next(rdr)  # Skip header line
-        for artist, songtitle, id in rdr:
-            database[id] = (artist, songtitle)
 
 @bp.route('/health')
 @metrics.do_not_track()
@@ -62,71 +50,30 @@ def health():
 def readiness():
     return Response("", status=200, mimetype="application/json")
 
-# list all playlists
-@bp.route('/', methods=['GET'])
-def list_all():
-    headers = request.headers
-    # check header here
-    if 'Authorization' not in headers:
-        return Response(json.dumps({"error": "missing auth"}),
-                        status=401,
-                        mimetype='application/json')
-    # list all songs here
-    return {}
-
-# read specific playlit by its id
-@bp.route('/<playlist_id>', methods=['GET'])
-def get_playlist(playlist):
-    headers = request.headers
-    # check header here
-    if 'Authorization' not in headers:
-        return Response(json.dumps({"error": "missing auth"}),
-                        status=401,
-                        mimetype='application/json')
-
-    payload = {
-        "objtype": "playlist",
-         "objkey": playlist
-    }
-
-    url = db['name'] + '/' + db['endpoint'][0]
-    response = requests.get(
-        url,
-        params=payload,
-        headers={'Authorization': headers['Authorization']})
-    return (response.json())
-
-# create a new playlist
 @bp.route('/', methods=['POST'])
-def create_playlist():
+def create_book():
     headers = request.headers
     # check header here
     if 'Authorization' not in headers:
         return Response(json.dumps({"error": "missing auth"}),
                         status=401,
                         mimetype='application/json')
-                        
-    # Playlist Creation require two main fields: user_id and array of songs.#
     try:
         content = request.get_json()
-        User_id = content['User_id']
-        SongList = content['SongList']
+        name = content['name']
+        book = content['book']
     except Exception:
         return json.dumps({"message": "error reading arguments"})
     url = db['name'] + '/' + db['endpoint'][1]
     response = requests.post(
         url,
-        json={
-            "objtype": "playlist",
-            "User_id": User_id,
-            "SongList": SongList
-        },
+        json={"objtype": "book", "name": name, "book": book},
         headers={'Authorization': headers['Authorization']})
     return (response.json())
 
 
-@bp.route('/<playlist_id>', methods=['DELETE'])
-def delete_song(playlist_id):
+@bp.route('/<book_id>', methods=['DELETE'])
+def delete_book(book_id):
     headers = request.headers
     # check header here
     if 'Authorization' not in headers:
@@ -136,20 +83,36 @@ def delete_song(playlist_id):
     url = db['name'] + '/' + db['endpoint'][2]
     response = requests.delete(
         url,
-        params={"objtype": "playlist", "objkey": playlist_id},
+        params={"objtype": "book", "objkey": book_id},
         headers={'Authorization': headers['Authorization']})
     return (response.json())
 
+
+@bp.route('/<book_id>', methods=['GET'])
+def get_book(book_id):
+    headers = request.headers
+    # check header here
+    if 'Authorization' not in headers:
+        return Response(json.dumps({"error": "missing auth"}),
+                        status=401,
+                        mimetype='application/json')
+    payload = {"objtype": "book", "objkey": book_id}
+    url = db['name'] + '/' + db['endpoint'][0]
+    response = requests.get(
+        url,
+        params=payload,
+        headers={'Authorization': headers['Authorization']})
+    return (response.json())
 
 
 # All database calls will have this prefix.  Prometheus metric
 # calls will not---they will have route '/metrics'.  This is
 # the conventional organization.
-app.register_blueprint(bp, url_prefix='/api/v1/music/')
+app.register_blueprint(bp, url_prefix='/api/v1/book/')
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        logging.error("missing port arg 1")
+        logging.error("Usage: app.py <service-port>")
         sys.exit(-1)
 
     p = int(sys.argv[1])
