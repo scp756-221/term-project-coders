@@ -56,7 +56,7 @@ spec:
       serviceAccountName: svc-s3
       containers:
       - name: cmpt756s3
-        image: 'ghcr.io/yide1235/cmpt756s3:v1'
+        image: 'ghcr.io/percyjia95/cmpt756s3:v1'
         imagePullPolicy: Always
         ports:
         - containerPort: 30003
